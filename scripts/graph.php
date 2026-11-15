@@ -94,10 +94,13 @@ foreach ($files as $file) {
         $classes[$id] = [
             'file' => substr($file->getPathname(), strlen($root) + 1),
             'hash' => sha1($code),
-            'uses' => array_unique($names),
+            'uses' => $names,
         ];
     }
 }
+
+// PHP reads a class name whatever its case, so a name written in another case still points to the class.
+$ids = array_combine(array_map(strtolower(...), array_keys($classes)), array_keys($classes));
 
 $nodes = [];
 $edges = [];
@@ -110,9 +113,10 @@ foreach ($classes as $id => $class) {
     }
 
     $nodes[] = ['id' => $id, 'context' => $from, 'file' => $class['file'], 'hash' => $class['hash']];
+    $uses = array_unique(array_filter(array_map(fn (string $name): ?string => $ids[strtolower($name)] ?? null, $class['uses'])));
 
-    foreach ($class['uses'] as $used) {
-        if ($used !== $id && isset($classes[$used]) && $context($used) !== null) {
+    foreach ($uses as $used) {
+        if ($used !== $id && $context($used) !== null) {
             $edges[] = [$id, $used];
         }
     }

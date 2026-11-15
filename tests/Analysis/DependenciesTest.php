@@ -177,6 +177,11 @@ it('finds a dependency in what the code does with a class', function (string $co
         use App\Billing\Domain;
         final class ShipOrder { public function __invoke(): object { return new Domain\Invoice; } }
         PHP,
+    'name in another case' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        final class ShipOrder { public function __invoke(): object { return new \App\billing\domain\invoice; } }
+        PHP,
     'name in two cases' => <<<'PHP'
         <?php
         namespace App\Shipping\Application;
