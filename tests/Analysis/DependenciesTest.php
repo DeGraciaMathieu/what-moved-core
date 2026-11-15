@@ -21,6 +21,10 @@ function usesOf(string $code): array
 
             final class Invoice
             {
+                public const PAID = 'paid';
+
+                public static int $issued = 0;
+
                 public static function draft(): self
                 {
                     return new self;
@@ -60,6 +64,24 @@ it('finds a dependency in a type', function (string $code) {
         use App\Billing\Domain\Invoice;
         final class ShipOrder { public function __invoke(Invoice|string $invoice): void {} }
         PHP,
+    'intersection type' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        use App\Billing\Domain\Invoice;
+        final class ShipOrder { public function __invoke(Invoice&\Countable $invoice): void {} }
+        PHP,
+    'property' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        use App\Billing\Domain\Invoice;
+        final class ShipOrder { private ?Invoice $invoice = null; }
+        PHP,
+    'typed constant' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        use App\Billing\Domain\Invoice;
+        final class ShipOrder { public const ?Invoice NONE = null; }
+        PHP,
 ]);
 
 it('finds a dependency in what the code does with a class', function (string $code) {
@@ -89,6 +111,42 @@ it('finds a dependency in what the code does with a class', function (string $co
         use App\Billing\Domain\Invoice;
         final class ShipOrder { public function __invoke(): string { return Invoice::class; } }
         PHP,
+    'class constant' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        use App\Billing\Domain\Invoice;
+        final class ShipOrder { public function __invoke(): string { return Invoice::PAID; } }
+        PHP,
+    'static property' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        use App\Billing\Domain\Invoice;
+        final class ShipOrder { public function __invoke(): int { return Invoice::$issued; } }
+        PHP,
+    'first-class callable' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        use App\Billing\Domain\Invoice;
+        final class ShipOrder { public function __invoke(): \Closure { return Invoice::draft(...); } }
+        PHP,
+    'arrow function' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        use App\Billing\Domain\Invoice;
+        final class ShipOrder { public function __invoke(): \Closure { return fn (): object => new Invoice; } }
+        PHP,
+    'new as a default value' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        use App\Billing\Domain\Invoice;
+        final class ShipOrder { public function __construct(private object $invoice = new Invoice) {} }
+        PHP,
+    'one of several caught exceptions' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        use App\Billing\Domain\Invoice;
+        final class ShipOrder { public function __invoke(): void { try {} catch (\LogicException|Invoice $e) {} } }
+        PHP,
     'attribute' => <<<'PHP'
         <?php
         namespace App\Shipping\Application;
@@ -106,6 +164,24 @@ it('finds a dependency in what the code does with a class', function (string $co
         namespace App\Shipping\Application;
         use App\Billing\Domain\Invoice as Bill;
         final class ShipOrder { public function __invoke(Bill $bill): void {} }
+        PHP,
+    'group import' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        use App\Billing\Domain\{Invoice};
+        final class ShipOrder { public function __invoke(Invoice $invoice): void {} }
+        PHP,
+    'imported namespace' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        use App\Billing\Domain;
+        final class ShipOrder { public function __invoke(): object { return new Domain\Invoice; } }
+        PHP,
+    'name in two cases' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        use App\Billing\Domain\Invoice;
+        final class ShipOrder { public function __invoke(): object { return new Invoice ?? new invoice; } }
         PHP,
 ]);
 
@@ -197,6 +273,29 @@ it('ignores a name that the code does not use', function (string $code) {
         namespace App\Shipping\Application;
         // Once shipped, see App\Billing\Domain\Invoice.
         final class ShipOrder {}
+        PHP,
+    'generic of a docblock' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        use App\Billing\Domain\Invoice;
+        final class ShipOrder
+        {
+            /** @var list<Invoice> */
+            private array $invoices = [];
+        }
+        PHP,
+    'class held in a variable' => <<<'PHP'
+        <?php
+        namespace App\Shipping\Application;
+        final class ShipOrder
+        {
+            public function __invoke(): object
+            {
+                $class = 'App\Billing\Domain\Invoice';
+
+                return new $class;
+            }
+        }
         PHP,
 ]);
 
