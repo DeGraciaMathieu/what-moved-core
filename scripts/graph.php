@@ -3,23 +3,19 @@
 /*
  * Lists the classes of the source folder and the classes of the source folder each one uses.
  * Usage: php graph.php <project root> <config json>. Prints JSON: nodes (id, context, file, hash) and edges ([from, to]).
- * It runs against both the base and the head of the pull request with the same parser, the one of this action.
+ * It runs against both the base and the head of the pull request with the same extractor, php-dep, pinned by composer.lock.
  * A class counts as used when its name appears in the code once resolved: a type, a new, a static call,
  * an instanceof, an attribute, a ::class. Imports alone and docblocks do not count.
  * The source folder and the root namespace come from the environment, filled by action.yml from the inputs;
  * the contexts come from the config file.
  */
 
-use PhpParser\Error;
-use PhpParser\Node;
-use PhpParser\NodeFinder;
-use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\NameResolver;
-use PhpParser\ParserFactory;
+use PhpDep\Api\PhpDep;
 
 require __DIR__.'/../vendor/autoload.php';
 
-$root = rtrim($argv[1], '/');
+// php-dep gives real paths, so the root is resolved the same way to cut them.
+$root = rtrim(realpath($argv[1]) ?: $argv[1], '/');
 $config = (require __DIR__.'/config.php')($argv[2]);
 $source = trim(getenv('WHAT_MOVED_SOURCE'), '/');
 $namespace = trim(getenv('WHAT_MOVED_NAMESPACE'), '\\').'\\';
@@ -60,63 +56,28 @@ $context = function (string $class) use ($namespace, $config, $prefixes, $matche
     return explode('\\', $relative)[0];
 };
 
-$parser = (new ParserFactory)->createForNewestSupportedVersion();
-$finder = new NodeFinder;
+// php-dep extracts the dependencies; a file it cannot read stays off the map, said in the logs.
+$analysis = PhpDep::analyze($root.'/'.$source);
 
-$classes = [];
-$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root.'/'.$source, FilesystemIterator::SKIP_DOTS));
-
-foreach ($files as $file) {
-    if ($file->getExtension() !== 'php') {
-        continue;
-    }
-
-    $code = file_get_contents($file->getPathname());
-    $traverser = new NodeTraverser(new NameResolver);
-
-    // A file the parser cannot read stays off the map, said in the logs, rather than leaving the pull request without one.
-    try {
-        $ast = $traverser->traverse($parser->parse($code));
-    } catch (Error $error) {
-        fwrite(STDERR, sprintf("Skipped %s: %s\n", substr($file->getPathname(), strlen($root) + 1), $error->getMessage()));
-
-        continue;
-    }
-
-    foreach ($finder->findInstanceOf($ast, Node\Stmt\ClassLike::class) as $declaration) {
-        if ($declaration->namespacedName === null) {
-            continue;
-        }
-
-        $id = $declaration->namespacedName->toString();
-        $names = array_map(fn (Node\Name $name): string => $name->toString(), $finder->findInstanceOf($declaration, Node\Name\FullyQualified::class));
-
-        $classes[$id] = [
-            'file' => substr($file->getPathname(), strlen($root) + 1),
-            'hash' => sha1($code),
-            'uses' => $names,
-        ];
-    }
+foreach ($analysis->parseErrors() as $file => $reason) {
+    fwrite(STDERR, sprintf("Skipped %s: %s\n", substr($file, strlen($root) + 1), $reason));
 }
-
-// PHP reads a class name whatever its case, so a name written in another case still points to the class.
-$ids = array_combine(array_map(strtolower(...), array_keys($classes)), array_keys($classes));
 
 $nodes = [];
 $edges = [];
 
-foreach ($classes as $id => $class) {
+foreach ($analysis->classes() as $id) {
     $from = $context($id);
 
     if ($from === null) {
         continue;
     }
 
-    $nodes[] = ['id' => $id, 'context' => $from, 'file' => $class['file'], 'hash' => $class['hash']];
-    $uses = array_unique(array_filter(array_map(fn (string $name): ?string => $ids[strtolower($name)] ?? null, $class['uses'])));
+    $file = $analysis->fileOf($id);
+    $nodes[] = ['id' => $id, 'context' => $from, 'file' => substr($file, strlen($root) + 1), 'hash' => sha1_file($file)];
 
-    foreach ($uses as $used) {
-        if ($used !== $id && $context($used) !== null) {
+    foreach ($analysis->dependenciesOf($id) as $used) {
+        if ($analysis->isDeclared($used) && $context($used) !== null) {
             $edges[] = [$id, $used];
         }
     }
