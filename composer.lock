@@ -4,8 +4,54 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2e0523ca9ea62a4add713bcc5c93dede",
+    "content-hash": "53da8fa6e9bdbb14011304f4577f234f",
     "packages": [
+        {
+            "name": "degraciamathieu/php-dep",
+            "version": "v3.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/DeGraciaMathieu/php-dep.git",
+                "reference": "50cdedeb24aa402e958348e46b2a1050fadf181f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/DeGraciaMathieu/php-dep/zipball/50cdedeb24aa402e958348e46b2a1050fadf181f",
+                "reference": "50cdedeb24aa402e958348e46b2a1050fadf181f",
+                "shasum": ""
+            },
+            "require": {
+                "nikic/php-parser": "^5.0",
+                "php": ">=8.2"
+            },
+            "require-dev": {
+                "humbug/box": "^4.6",
+                "phpunit/phpunit": "^11.0"
+            },
+            "bin": [
+                "bin/php-dep"
+            ],
+            "type": "project",
+            "autoload": {
+                "psr-4": {
+                    "PhpDep\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "PhpDep\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "PHP dependency analyzer - extract and visualize class relationships",
+            "support": {
+                "source": "https://github.com/DeGraciaMathieu/php-dep/tree/v3.0.0",
+                "issues": "https://github.com/DeGraciaMathieu/php-dep/issues"
+            },
+            "time": "2026-11-15T16:55:33+00:00"
+        },
         {
             "name": "nikic/php-parser",
             "version": "v5.9.0",
