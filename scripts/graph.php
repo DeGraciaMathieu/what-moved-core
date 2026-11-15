@@ -10,11 +10,7 @@
  * the contexts come from the config file.
  */
 
-use PhpDep\Analyzer\AnalyzerConfig;
-use PhpDep\Analyzer\ProjectAnalyzer;
-use PhpDep\Analyzer\WorkerPool;
-use PhpDep\Parser\PhpFileParser;
-use PhpDep\Warning\WarningType;
+use PhpDep\Api\PhpDep;
 
 require __DIR__.'/../vendor/autoload.php';
 
@@ -61,30 +57,28 @@ $context = function (string $class) use ($namespace, $config, $prefixes, $matche
 };
 
 // php-dep extracts the dependencies; a file it cannot read stays off the map, said in the logs.
-$result = (new ProjectAnalyzer(new PhpFileParser()))->analyze($root.'/'.$source, new AnalyzerConfig(workers: WorkerPool::cpuCount()));
-$graph = $result['graph'];
+$analysis = PhpDep::analyze($root.'/'.$source);
 
-foreach ($result['warnings'] as $warning) {
-    if ($warning->type === WarningType::PARSE_ERROR) {
-        fwrite(STDERR, sprintf("Skipped %s: %s\n", substr($warning->file, strlen($root) + 1), $warning->message));
-    }
+foreach ($analysis->parseErrors() as $file => $reason) {
+    fwrite(STDERR, sprintf("Skipped %s: %s\n", substr($file, strlen($root) + 1), $reason));
 }
 
 $nodes = [];
 $edges = [];
 
-foreach ($graph->getInternalNodes() as $node) {
-    $from = $context($node->fqcn);
+foreach ($analysis->classes() as $id) {
+    $from = $context($id);
 
     if ($from === null) {
         continue;
     }
 
-    $nodes[] = ['id' => $node->fqcn, 'context' => $from, 'file' => substr($node->file, strlen($root) + 1), 'hash' => sha1_file($node->file)];
+    $file = $analysis->fileOf($id);
+    $nodes[] = ['id' => $id, 'context' => $from, 'file' => substr($file, strlen($root) + 1), 'hash' => sha1_file($file)];
 
-    foreach ($graph->dependenciesOf($node->fqcn) as $used) {
-        if (! $graph->getNode($used)->isExternal() && $context($used) !== null) {
-            $edges[] = [$node->fqcn, $used];
+    foreach ($analysis->dependenciesOf($id) as $used) {
+        if ($analysis->isDeclared($used) && $context($used) !== null) {
+            $edges[] = [$id, $used];
         }
     }
 }

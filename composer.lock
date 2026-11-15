@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "53da8fa6e9bdbb14011304f4577f234f",
+    "content-hash": "af06da45272ca7b79ff984acfe879228",
     "packages": [
         {
             "name": "degraciamathieu/php-dep",
-            "version": "v3.0.0",
+            "version": "v3.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/DeGraciaMathieu/php-dep.git",
-                "reference": "50cdedeb24aa402e958348e46b2a1050fadf181f"
+                "reference": "fb2629f348d0fa866922e825754a426a7bed65c2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/DeGraciaMathieu/php-dep/zipball/50cdedeb24aa402e958348e46b2a1050fadf181f",
-                "reference": "50cdedeb24aa402e958348e46b2a1050fadf181f",
+                "url": "https://api.github.com/repos/DeGraciaMathieu/php-dep/zipball/fb2629f348d0fa866922e825754a426a7bed65c2",
+                "reference": "fb2629f348d0fa866922e825754a426a7bed65c2",
                 "shasum": ""
             },
             "require": {
@@ -47,10 +47,10 @@
             ],
             "description": "PHP dependency analyzer - extract and visualize class relationships",
             "support": {
-                "source": "https://github.com/DeGraciaMathieu/php-dep/tree/v3.0.0",
+                "source": "https://github.com/DeGraciaMathieu/php-dep/tree/v3.1.0",
                 "issues": "https://github.com/DeGraciaMathieu/php-dep/issues"
             },
-            "time": "2026-11-15T16:55:33+00:00"
+            "time": "2026-11-15T17:10:13+00:00"
         },
         {
             "name": "nikic/php-parser",

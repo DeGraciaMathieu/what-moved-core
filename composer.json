@@ -3,7 +3,7 @@
     "type": "project",
     "description": "Analysis of what-moved: maps what a pull request moved among PHP classes and their dependencies",
     "require": {
-        "degraciamathieu/php-dep": "^3.0"
+        "degraciamathieu/php-dep": "^3.1"
     },
     "require-dev": {
         "pestphp/pest": "^3.8"
