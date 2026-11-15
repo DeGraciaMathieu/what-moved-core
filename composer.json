@@ -1,5 +1,25 @@
 {
+    "name": "degraciamathieu/what-moved-core",
+    "type": "project",
+    "description": "Analysis of what-moved: maps what a pull request moved among PHP classes and their dependencies",
     "require": {
         "nikic/php-parser": "^5.9"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.8"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "test:real": "pest --group=real"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
     }
 }
